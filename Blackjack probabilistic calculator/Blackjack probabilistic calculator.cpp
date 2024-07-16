@@ -39,6 +39,13 @@ static inline cards parse_card( const string& card ) {
     else return error_card;
 }
 
+static inline uint_fast8_t parse_chance( const uint_fast8_t& score ) {
+    if ( score < 12 ) return 100;
+    if ( score > 20 ) return 0;
+    
+    return 64 - 7 * (score - 12);
+}
+
 static inline void cls() {
 #if defined(_WIN32) || defined(_WIN64)
     system( "cls" );
@@ -47,24 +54,39 @@ static inline void cls() {
 #endif
 }
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+void sleep( uint_fast64_t milliseconds ) {
+    Sleep( milliseconds );
+}
+#elif defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__unix__) || defined(__sun)
+#include <chrono>
+#include <thread>
+void sleep( uint_fast64_t milliseconds ) {
+    std::this_thread::sleep_for( std::chrono::milliseconds( milliseconds ) );
+}
+#endif
+
 void simulation( uint_fast64_t amount ) {
     cls();
     random_device dev;
     uniform_int_distribution<int> random_card( card_2, card_A );
+    uniform_int_distribution<int> random_chance( 0, 100 );
 
     cout << " <----------------------------------------------------------> \n\n";
     string input;
     cards player_card;
     cards dealer_card;
 
-    bool dealer_ace( false ), player_ace( false );
+    bool dealer_ace( false ), player_ace( false ), player_ace_copy( false );
     uint_fast8_t player_score( 0 ), low_player_score( 21 );
+    uint_fast8_t player_copy( 0 );
     uint_fast8_t dealer_score( 0 ), low_dealer_score( 21 );
     uint_fast8_t rc;
+    long double stand_percentage, hit_percentage;
+    bool take_new_card( false );
 
-    uint_fast64_t wins( 0 );
-    uint_fast64_t daws( 0 );
-    uint_fast64_t dws[5] = { 0,0,0,0,0 };
+    uint_fast64_t stand_wins( 0 ), hit_wins( 0 );
 
     // inputs
     cout << " 2 3 4 5 6 7 8 9 D J Q K A \n";
@@ -111,7 +133,12 @@ void simulation( uint_fast64_t amount ) {
         return;
 
     do {
-        // THE SIMULATION
+        player_copy = player_score;
+        player_ace_copy = player_ace;
+        stand_wins = 0;
+        hit_wins = 0;
+
+        // THE 'STAND' SIMULATION
         for ( uint_fast64_t i( 0 ); i < amount; ++i ) {
             // setup
             dealer_score = dealer_card;
@@ -143,52 +170,147 @@ void simulation( uint_fast64_t amount ) {
 
             if ( dealer_score > 21 ) {
                 // if overflowed use the ace
-                if ( dealer_ace )
+                if ( dealer_ace ) {
+                    if ( low_dealer_score > 21 ) {
+                        ++stand_wins;
+                        continue;
+                    }
                     dealer_score = low_dealer_score;
+                }
 
                 // tactic worked because of dealer's overflow
                 else {
-                    ++wins;
+                    ++stand_wins;
                     continue;
                 }
             }
 
-            // the lower score can also be overflowed
-            if ( dealer_score > 21 ) {
-                ++wins;
+            // tactic worked because of winning score
+            if ( player_score >= dealer_score ) {
+                ++stand_wins;
                 continue;
+            }
+        }
+
+        // THE 'HIT' SIMULATION
+        for ( uint_fast64_t i( 0 ); i < amount; ++i ) {
+            // setup
+            dealer_score = dealer_card;
+            player_score = player_copy;
+            player_ace = player_ace_copy;
+            take_new_card = true;
+
+            // simulating player's hand
+            while ( (player_score < 21 || (player_ace && (low_player_score < 21))) && take_new_card ) {
+                rc = random_card( dev );
+
+                // handling aces
+                if ( rc == card_A ) {
+                    if ( player_ace )
+                        player_score += 1;
+                    else
+                        player_score += 11;
+
+                    player_ace = true;
+                } else player_score += rc;
+
+                if ( player_ace )
+                    low_player_score = player_score - 10;
+
+                // should we take a new card
+                take_new_card = (random_chance( dev ) <= parse_chance( player_score ));
+            }
+
+            if ( player_score > 21 ) {
+                // if overflowed use the ace
+                if ( player_ace ) {
+                    if ( low_player_score > 21 )
+                        continue;
+                    player_score = low_player_score;
+                }
+
+                // tactic didn't work because of player's overflow
+                else
+                    continue;
+            }
+
+            // if blackjack - do not take more
+            if ( player_score == 21 )
+                continue;
+
+            // dealer starting ace test
+            dealer_ace = (dealer_card == card_A);
+            if ( dealer_ace )
+                low_dealer_score = 1;
+            else
+                low_dealer_score = 21;
+
+            // simulating dealer's hand
+            while ( dealer_score < 17 || (dealer_ace && (low_dealer_score < 17)) ) {
+                rc = random_card( dev );
+
+                // handling aces
+                if ( rc == card_A ) {
+                    if ( dealer_ace )
+                        dealer_score += 1;
+                    else
+                        dealer_score += 11;
+
+                    dealer_ace = true;
+                } else dealer_score += rc;
+
+                if ( dealer_ace )
+                    low_dealer_score = dealer_score - 10;
+            }
+
+            if ( dealer_score > 21 ) {
+                // if overflowed use the ace
+                if ( dealer_ace ) {
+                    if ( low_dealer_score > 21 ) {
+                        ++hit_wins;
+                        continue;
+                    }
+                    dealer_score = low_dealer_score;
+                }
+
+                // tactic worked because of dealer's overflow
+                else {
+                    ++hit_wins;
+                    continue;
+                }
             }
 
             // tactic worked because of winning score
             if ( player_score >= dealer_score ) {
-                ++wins;
+                ++hit_wins;
                 continue;
             }
-
-            // womp womp tactic bad, let's save statistics
-            daws += dealer_score;
-            ++dws[dealer_score - 17];
         }
 
-        // winning percentage
-        long double percentage( (long double)(wins) / (long double)(amount) );
+        // backing up
+        player_score = player_copy;
+        player_ace = player_ace_copy;
+
+        // stand winning percentage
+        stand_percentage = (long double)(stand_wins) / (long double)(amount);
+        hit_percentage = (long double)(hit_wins) / (long double)(amount);
 
         // the results
         cout << "\n <-----> \n";
         cout << " The calculated decision >> \n";
 
-        if ( wins >= amount / 2 ) {
-            cout << " - " << percentage * 100 << " %   > STAND <\n";
-            cout << " - " << (1 - percentage) * 100 << " %     hit\n";
+        if ( stand_percentage > hit_percentage ) {
+            cout << " - " << stand_percentage * 100 << " %   > STAND <\n";
+            cout << " - " << hit_percentage * 100 << " %     hit\n";
         } else {
-            cout << " - " << percentage * 100 << " %     stand\n";
-            cout << " - " << (1 - percentage) * 100 << " %   > HIT <\n";
+            cout << " - " << stand_percentage * 100 << " %     stand\n";
+            cout << " - " << hit_percentage * 100 << " %   > HIT <\n";
         }
         cout << " <-----> \n\n";
 
         cout << "\n <----------------------------------------------------------> \n\n";
 
-        if ( wins >= amount / 2 )
+        if ( stand_wins > hit_wins )
             break;
 
         // another inputs
@@ -333,7 +455,7 @@ int main() {
     cout << " /--------------------------------------\\ \n";
     cout << " |                                      |\n";
     cout << " |   Blackjack probabilistic            |\n";
-    cout << " |               calculator version 1   |\n";
+    cout << " |               calculator version 2   |\n";
     cout << " |                                      |\n";
     cout << " |                by Krzysztof Luczka   |\n";
     cout << " |                                      |\n";
@@ -345,13 +467,17 @@ int main() {
         << " milions of games to reveal the actual\n"
         << " chances of winning.\n\n\n";
 
-    cout << "    1. Dynamic mode\n";
+    /*cout << "    1. Standard mode\n";
     cout << "         Type player cards on the fly\n";
     cout << "         without additional statistics.\n";
-    /*cout << "    2. Rainbow tables\n";
-    cout << "         Table with precalculated stats.\n\n";*/
-    cout << " >> "; cin >> input;
+    cout << "    2. Double mode\n";
+    cout << "         Standard mode with 'double down'\n";
+    cout << "    3. Rainbow tables\n";
+    cout << "         Table with precalculated stats.\n\n";
+    cout << " >> "; cin >> input;*/
 
+    sleep( 3000 );
 
-    simulation( 1000000 );
+    while ( 1 )
+        simulation( 1000000 );
 }
