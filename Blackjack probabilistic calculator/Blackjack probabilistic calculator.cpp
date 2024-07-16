@@ -47,167 +47,7 @@ static inline void cls() {
 #endif
 }
 
-/*
-    Simulate one card position
-*/
-void static_simulation( uint_fast64_t amount ) {
-    cls();
-    random_device dev;
-    uniform_int_distribution<int> random_card( card_2, card_A );
-
-    cout << " <----------------------------------------------------------> \n\n";
-    string input;
-    cards player_card;
-    cards dealer_card;
-
-    bool dealer_ace( false ), player_ace( false );
-    uint_fast8_t player_score( 0 ), low_player_score( 21 );
-    uint_fast8_t dealer_score( 0 ), low_dealer_score( 21 );
-    uint_fast8_t rc;
-
-    uint_fast64_t wins( 0 );
-    uint_fast64_t daws( 0 );
-    uint_fast64_t dws[5] = { 0,0,0,0,0 };
-
-    // inputs
-    cout << " 2 3 4 5 6 7 8 9 D J Q K A ( to stop giving cards type X ) \n";
-    for ( uint_fast8_t i( 0 ); i < 11; ++i ) {
-        cout << " Player's card >> "; cin >> input;
-
-        if ( input == "x" || input == "X" )
-            break;
-
-        player_card = parse_card( input );
-
-        // ace handling
-        if ( player_card == card_A ) {
-            if ( player_ace )
-                player_score += 1;
-            else
-                player_score += 11;
-
-            player_ace = true;
-        }
-
-        // not ace handling
-        else
-            player_score += player_card;
-
-        // lower ace score
-        low_player_score = player_score - 10;
-    }
-    cout << " Dealer's card >> "; cin >> input;
-    dealer_card = parse_card( input );
-
-    if ( player_score > 21 ) {
-        // if overflowed use the ace
-        if ( player_ace )
-            player_score = low_player_score;
-
-        // tactic didn't work because of player's overflow
-        else
-            return;
-    }
-
-    // the lower score can also be overflowed
-    if ( player_score > 21 )
-        return;
-
-    // THE SIMULATION
-    for ( uint_fast64_t i( 0 ); i < amount; ++i ) {
-        // setup
-        dealer_score = dealer_card;
-
-        // dealer starting ace test
-        dealer_ace = (dealer_card == card_A);
-        if ( dealer_ace )
-            low_dealer_score = 1;
-        else
-            low_dealer_score = 21;
-
-        // simulating dealer's hand
-        while ( dealer_score < 17 || (dealer_ace && (low_dealer_score < 17)) ) {
-            rc = random_card( dev );
-
-            // handling aces
-            if ( rc == card_A ) {
-                if ( dealer_ace )
-                    dealer_score += 1;
-                else
-                    dealer_score += 11;
-
-                dealer_ace = true;
-            } else dealer_score += rc;
-
-            if ( dealer_ace )
-                low_dealer_score = dealer_score - 10;
-        }
-
-        if ( dealer_score > 21 ) {
-            // if overflowed use the ace
-            if ( dealer_ace )
-                dealer_score = low_dealer_score;
-
-            // tactic worked because of dealer's overflow
-            else {
-                ++wins;
-                continue;
-            }
-        }
-
-        // the lower score can also be overflowed
-        if ( dealer_score > 21 ) {
-            ++wins;
-            continue;
-        }
-
-        // tactic worked because of winning score
-        if ( player_score >= dealer_score ) {
-            ++wins;
-            continue;
-        }
-
-        // womp womp tactic bad, let's save statistics
-        daws += dealer_score;
-        ++dws[dealer_score - 17];
-    }
-
-    // winning percentage
-    long double percentage( (long double)(wins) / (long double)(amount) );
-
-    // the results
-    cout << "\n <-----> \n";
-    cout << " The calculated decision >> \n";
-
-    if ( wins >= amount / 2 ) {
-        cout << " - " << percentage * 100 << " %   > STOP <\n";
-        cout << " - " << (1 - percentage) * 100 << " %     take\n";
-    } else {
-        cout << " - " << percentage * 100 << " %     stop\n";
-        cout << " - " << (1 - percentage) * 100 << " %   > TAKE <\n";
-    }
-    cout << " <-----> \n\n";
-
-    // dealer's average winning score
-    cout << " Dealer's won matches statistics\n";
-    if ( wins != amount ) {
-        cout << "     Average winning score >> " << (long double)(daws) / (long double)(amount - wins) << "\n\n";
-
-        for ( uint_fast8_t i( 0 ); i < 5; ++i )
-            if ( dws[i] != 0 )
-                cout << "     Winning score " << i + 17 << " occured " << (long double)(dws[i]) / (long double)(amount - wins) * 100 << " % of times\n";
-    }
-
-    cout << "\n <----------------------------------------------------------> \n\n";
-    cout << " Press any key to start new simulation.\n";
-    cin.ignore();
-    cin.get();
-}
-
-/*
-    Dynamically simulate given position (add cards after evalution)
-*/
-void dynamic_simulation( uint_fast64_t amount ) {
+void simulation( uint_fast64_t amount ) {
     cls();
     random_device dev;
     uniform_int_distribution<int> random_card( card_2, card_A );
@@ -253,7 +93,7 @@ void dynamic_simulation( uint_fast64_t amount ) {
         // lower ace score
         low_player_score = player_score - 10;
     }
-    cout << " Dealer's card >> "; cin >> input;
+    cout << "\n Dealer's card >> "; cin >> input;
     dealer_card = parse_card( input );
 
     if ( player_score > 21 ) {
@@ -338,11 +178,11 @@ void dynamic_simulation( uint_fast64_t amount ) {
         cout << " The calculated decision >> \n";
 
         if ( wins >= amount / 2 ) {
-            cout << " - " << percentage * 100 << " %   > STOP <\n";
-            cout << " - " << (1 - percentage) * 100 << " %     take\n";
+            cout << " - " << percentage * 100 << " %   > STAND <\n";
+            cout << " - " << (1 - percentage) * 100 << " %     hit\n";
         } else {
-            cout << " - " << percentage * 100 << " %     stop\n";
-            cout << " - " << (1 - percentage) * 100 << " %   > TAKE <\n";
+            cout << " - " << percentage * 100 << " %     stand\n";
+            cout << " - " << (1 - percentage) * 100 << " %   > HIT <\n";
         }
         cout << " <-----> \n\n";
 
@@ -423,7 +263,7 @@ void dynamic_simulation( uint_fast64_t amount ) {
 //            cout << " You can search by typing player score.\n";
 //            cout << " Type X to reset searching. \n\n\n";
 //
-//            cout << "    |   Player score   |   Dealer score   |   Take %   |   Stop %   |\n\n";
+//            cout << "    |   Player score   |   Dealer score   |   hit %   |   stand %   |\n\n";
 //
 //            for ( uint_fast64_t i( 0 ); i < tokens.size(); i += 4 ) {
 //                if ( searching )
@@ -450,7 +290,7 @@ void dynamic_simulation( uint_fast64_t amount ) {
 //                if ( (18 - tokens[i + 1]->size()) % 2 ) cout << " ";
 //                cout << "|";
 //
-//                // take chance
+//                // HIT chance
 //                for ( uint_fast8_t n( 0 ); n < (12 - tokens[i + 2]->size()) / 2; ++n )
 //                    cout << " ";
 //                cout << *tokens[i + 2];
@@ -493,7 +333,7 @@ int main() {
     cout << " /--------------------------------------\\ \n";
     cout << " |                                      |\n";
     cout << " |   Blackjack probabilistic            |\n";
-    cout << " |                calculator ( v1.0 )   |\n";
+    cout << " |               calculator version 1   |\n";
     cout << " |                                      |\n";
     cout << " |                by Krzysztof Luczka   |\n";
     cout << " |                                      |\n";
@@ -508,17 +348,10 @@ int main() {
     cout << "    1. Dynamic mode\n";
     cout << "         Type player cards on the fly\n";
     cout << "         without additional statistics.\n";
-    cout << "    2. Static mode\n";
-    cout << "         Type player cards and wait for\n";
-    cout << "         the full evaluation.\n\n";
-    /*cout << "    3. Rainbow tables\n";
+    /*cout << "    2. Rainbow tables\n";
     cout << "         Table with precalculated stats.\n\n";*/
     cout << " >> "; cin >> input;
 
-    if ( input == "2" ) while ( 1 )
-        static_simulation( 10000000 );
-    /*else if ( input == "3" )
-        rainbow_table();*/
-    else while ( 1 )
-        dynamic_simulation( 1000000 );
+
+    simulation( 1000000 );
 }

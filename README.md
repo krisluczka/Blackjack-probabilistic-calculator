@@ -1,1 +1,7 @@
 # Blackjack probabilistic calculator
+A simple calculator that evaluates the chances of winning a given position in blackjack. Due to the fact that _double down_, _split_ and _insurance_ are purely gambling decisions based on one's own sense of luck or they come down to the basic _hit_ and _stand_, the project calculates the probability of winning if we _stand_.
+## The method
+Calculator simulates through a given number (hardcoded milion) of random positions to reveal what percentage of games where we _stand_ with given set of cards we won.
+## Result interpretation
+Calculating your chances of winning after taking a card is yet to be added. Regarding version 1.0, the result only reveal the winning chances when we _stand_. Even though it is far accurate, the game is about maximizing chances - thus the new version will include _hit_ winning chances.
+For example, when we have **King** and **Queen** (20 points) and the dealer has **Jack** (10 points), the percentage of winning after _stand_ decision will be around 92% which is a really good approximation - we should _stand_. But sometimes there might be a situation where we win 55% of times while _standing_. We don't know the statistic of winning while _hitting_, but it might be a little bit higher, for example 65%, thus we should _hit_ instead of _standing_.
