@@ -175,6 +175,7 @@ void simulation( uint_fast64_t amount ) {
                         ++stand_wins;
                         continue;
                     }
+
                     dealer_score = low_dealer_score;
                 }
 
@@ -227,6 +228,7 @@ void simulation( uint_fast64_t amount ) {
                     if ( low_player_score > 21 )
                         continue;
                     player_score = low_player_score;
+                    player_ace = false;
                 }
 
                 // tactic didn't work because of player's overflow
@@ -234,9 +236,11 @@ void simulation( uint_fast64_t amount ) {
                     continue;
             }
 
-            // if blackjack - do not take more
-            if ( player_score == 21 )
+            // if blackjack - win 
+            if ( player_score == 21 ) {
+                //++hit_wins;
                 continue;
+            }
 
             // dealer starting ace test
             dealer_ace = (dealer_card == card_A);
@@ -271,6 +275,7 @@ void simulation( uint_fast64_t amount ) {
                         continue;
                     }
                     dealer_score = low_dealer_score;
+                    dealer_ace = false;
                 }
 
                 // tactic worked because of dealer's overflow
@@ -341,8 +346,10 @@ void simulation( uint_fast64_t amount ) {
 
         if ( player_score > 21 ) {
             // if overflowed use the ace
-            if ( player_ace )
+            if ( player_ace ) {
                 player_score = low_player_score;
+                player_ace = false;
+            }
 
             // tactic didn't work because of player's overflow
             else
