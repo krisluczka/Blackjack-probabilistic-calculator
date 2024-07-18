@@ -1,6 +1,8 @@
 ﻿#include <iostream>
 #include <sstream>
 #include <cstdlib>
+#include <chrono>
+#include <thread>
 #include <fstream>
 #include <string>
 #include <random>
@@ -31,8 +33,8 @@ static inline cards parse_card( const string& card ) {
     else if ( card == "7" ) return card_7;
     else if ( card == "8" ) return card_8;
     else if ( card == "9" ) return card_9;
-    else if ( card == "D" || card == "J" || card == "Q" || card == "K" ) return card_10;
-    else if ( card == "d" || card == "j" || card == "q" || card == "k" ) return card_10;
+    else if ( card == "T" || card == "J" || card == "Q" || card == "K" ) return card_10;
+    else if ( card == "t" || card == "j" || card == "q" || card == "k" ) return card_10;
     else if ( card == "A" ) return card_A;
     else if ( card == "a" ) return card_A;
 
@@ -54,18 +56,9 @@ static inline void cls() {
 #endif
 }
 
-#if defined(_WIN32) || defined(_WIN64)
-#include <windows.h>
-void sleep( uint_fast64_t milliseconds ) {
-    Sleep( milliseconds );
-}
-#elif defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__unix__) || defined(__sun)
-#include <chrono>
-#include <thread>
 void sleep( uint_fast64_t milliseconds ) {
     std::this_thread::sleep_for( std::chrono::milliseconds( milliseconds ) );
 }
-#endif
 
 void simulation( uint_fast64_t amount ) {
     cls();
@@ -89,7 +82,7 @@ void simulation( uint_fast64_t amount ) {
     uint_fast64_t stand_wins( 0 ), hit_wins( 0 );
 
     // inputs
-    cout << " 2 3 4 5 6 7 8 9 D J Q K A \n";
+    cout << " 2 3 4 5 6 7 8 9 T J Q K A \n";
     for ( uint_fast8_t i( 0 ); i < 2; ++i ) {
         cout << " Player's card >> "; cin >> input;
 
@@ -319,7 +312,7 @@ void simulation( uint_fast64_t amount ) {
             break;
 
         // another inputs
-        cout << " 2 3 4 5 6 7 8 9 D J Q K A ( to start new simulation X ) \n\n";
+        cout << " 2 3 4 5 6 7 8 9 T J Q K A ( to start new simulation X ) \n\n";
         cout << " Player's card >> "; cin >> input;
 
         if ( input == "x" || input == "X" )
@@ -367,12 +360,10 @@ void simulation( uint_fast64_t amount ) {
 }
 
 int main() {
-    string input;
-
     cout << " /--------------------------------------\\ \n";
     cout << " |                                      |\n";
     cout << " |   Blackjack probabilistic            |\n";
-    cout << " |               calculator version 3   |\n";
+    cout << " |               calculator version 4   |\n";
     cout << " |                                      |\n";
     cout << " |                by Krzysztof Luczka   |\n";
     cout << " |                                      |\n";
