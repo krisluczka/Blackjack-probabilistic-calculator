@@ -366,103 +366,13 @@ void simulation( uint_fast64_t amount ) {
     cin.get();
 }
 
-//void rainbow_table() {
-//    ifstream file( "bjrt.txt" );
-//    vector<string*> tokens;
-//    string search;
-//    bool searching( false );
-//
-//    if ( file ) {
-//        string line;
-//
-//        // dividing the file into tokens
-//        while ( getline( file, line ) ) {
-//            string token;
-//            istringstream iss( line );
-//            while ( iss >> token )
-//                tokens.push_back( new string( token ) );
-//        }
-//
-//        while ( 1 ) {
-//            cls();
-//            cout << "\n\n";
-//            cout << "    |                                |\n";
-//            cout << "    |    Blackjack Rainbow Tables    |\n";
-//            cout << "    |                                |\n\n\n";
-//            cout << " You can search by typing player score.\n";
-//            cout << " Type X to reset searching. \n\n\n";
-//
-//            cout << "    |   Player score   |   Dealer score   |   hit %   |   stand %   |\n\n";
-//
-//            for ( uint_fast64_t i( 0 ); i < tokens.size(); i += 4 ) {
-//                if ( searching )
-//                    if ( *tokens[i] != search )
-//                        continue;
-//
-//                cout << "    |";
-//            
-//                // player score
-//                for ( uint_fast8_t n( 0 ); n < (18 - tokens[i]->size()) / 2; ++n )
-//                    cout << " ";
-//                cout << *tokens[i];
-//                for ( uint_fast8_t n( 0 ); n < (18 - tokens[i]->size()) / 2; ++n )
-//                    cout << " ";
-//                if ( (18 - tokens[i]->size()) % 2 ) cout << " ";
-//                cout << "|";
-//
-//                // dealer score
-//                for ( uint_fast8_t n( 0 ); n < (18 - tokens[i + 1]->size()) / 2; ++n )
-//                    cout << " ";
-//                cout << *tokens[i + 1];
-//                for ( uint_fast8_t n( 0 ); n < (18 - tokens[i + 1]->size()) / 2; ++n )
-//                    cout << " ";
-//                if ( (18 - tokens[i + 1]->size()) % 2 ) cout << " ";
-//                cout << "|";
-//
-//                // HIT chance
-//                for ( uint_fast8_t n( 0 ); n < (12 - tokens[i + 2]->size()) / 2; ++n )
-//                    cout << " ";
-//                cout << *tokens[i + 2];
-//                for ( uint_fast8_t n( 0 ); n < (12 - tokens[i + 2]->size()) / 2; ++n )
-//                    cout << " ";
-//                if ( (12 - tokens[i + 2]->size()) % 2 ) cout << " ";
-//                cout << "|";
-//
-//                // player score
-//                for ( uint_fast8_t n( 0 ); n < (12 - tokens[i + 3]->size()) / 2; ++n )
-//                    cout << " ";
-//                cout << *tokens[i + 3];
-//                for ( uint_fast8_t n( 0 ); n < (12 - tokens[i + 3]->size()) / 2; ++n )
-//                    cout << " ";
-//                if ( (12 - tokens[i + 3]->size()) % 2 ) cout << " ";
-//                cout << "|\n";
-//            }
-//
-//            cout << "\n\n >> "; cin >> search;
-//
-//            if ( search != "X" && search != "x" ) searching = true;
-//            else searching = false;
-//        }
-//    } else {
-//        cout << " Unable to find blackjack rainbow table file ( 'bjrt.txt' ).\n";
-//        cout << " Visit 'https://github.com/krisluczka' and download the newest version.\n";
-//    }
-//
-//    file.close();
-//    cin.ignore();
-//    cin.get();
-//
-//    for ( string* token : tokens )
-//        delete token;
-//}
-
 int main() {
     string input;
 
     cout << " /--------------------------------------\\ \n";
     cout << " |                                      |\n";
     cout << " |   Blackjack probabilistic            |\n";
-    cout << " |               calculator version 2   |\n";
+    cout << " |               calculator version 3   |\n";
     cout << " |                                      |\n";
     cout << " |                by Krzysztof Luczka   |\n";
     cout << " |                                      |\n";
